@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown Notes</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/png" href="/favicon.png">
+</head>
+<body>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container"></div>
+
+    <!-- ===== LOGIN VIEW ===== -->
+    <section id="login-view" class="view active">
+        <div class="login-card">
+            <div class="login-header">
+                <i class="ph ph-notebook text-xl"></i>
+                <h1>Welcome Back</h1>
+                <p>Enter your username to access your notes</p>
+            </div>
+
+            <form id="login-form">
+                <div class="input-group">
+                    <i class="ph ph-user"></i>
+                    <input type="text" id="username-input" placeholder="Username" required autocomplete="off">
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    Continue <i class="ph ph-arrow-right"></i>
+                </button>
+            </form>
+        </div>
+    </section>
+
+    <!-- ===== DASHBOARD VIEW ===== -->
+    <section id="dashboard-view" class="view hidden">
+        <header class="app-header">
+            <div class="header-left">
+                <i class="ph ph-notebook brand-icon"></i>
+                <h2 id="welcome-message">Hello, User</h2>
+            </div>
+            <button id="logout-btn" class="btn btn-icon" title="Logout">
+                <i class="ph ph-sign-out"></i>
+            </button>
+        </header>
+
+        <main class="dashboard-content">
+            <div id="empty-state" class="hidden">
+                <i class="ph ph-files"></i>
+                <p>No notes found</p>
+                <span>Click the + button to create your first note.</span>
+            </div>
+
+            <div id="notes-grid" class="notes-grid">
+                <!-- Notes will be injected here dynamically -->
+            </div>
+        </main>
+
+        <!-- Floating Action Button -->
+        <button id="fab-create-note" class="fab" title="Create New Note">
+            <i class="ph ph-plus"></i>
+        </button>
+    </section>
+
+    <!-- ===== EDITOR VIEW ===== -->
+    <section id="editor-view" class="view hidden">
+        <header class="app-header editor-header">
+            <div class="header-left">
+                <button id="btn-back" class="btn btn-ghost">
+                    <i class="ph ph-arrow-left"></i> Back
+                </button>
+                <div class="note-title-wrapper">
+                    <input type="text" id="note-title" placeholder="Untitled Note">
+                </div>
+            </div>
+            <div class="view-toggle">
+                <button id="btn-tab-edit" class="btn btn-ghost active">Edit</button>
+                <button id="btn-tab-preview" class="btn btn-ghost">Preview (HTML)</button>
+            </div>
+            <div class="header-right">
+                <input type="file" id="file-upload" accept=".md" class="hidden-input">
+                <label for="file-upload" class="btn btn-outline" title="Upload .md file">
+                    <i class="ph ph-upload-simple"></i> Browse .md
+                </label>
+                <button id="btn-save" class="btn btn-primary">
+                    <i class="ph ph-floppy-disk"></i> Save
+                </button>
+            </div>
+        </header>
+
+        <main class="editor-content">
+            <textarea id="markdown-textarea" placeholder="Start writing your beautiful markdown here..."></textarea>
+            <div id="html-preview" class="html-preview hidden"></div>
+        </main>
+    </section>
+
+    <script src="app.js"></script>
+</body>
+</html>
