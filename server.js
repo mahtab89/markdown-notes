@@ -11,7 +11,6 @@ import fs from "fs";
 const app = express();
 dotenv.config();
 
-// ===== MongoDB Connection =====
 const MDB_USERNAME = process.env.MONGODB_USERNAME;
 const MDB_PASSWORD = process.env.MONGODB_PASSWORD;
 
@@ -22,20 +21,20 @@ mongoose
   .then(() => console.log("MongoDB Connected"))
   .catch((err) => console.log(err));
 
-// ===== Path Setup =====
+// Path Setup
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// ===== Middleware =====
+// Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
 
-// ===== Config =====
+// Config
 const PORT = process.env.PORT || 3000;
 const upload = multer({ dest: "uploads/" });
 
-// ===== Schema =====
+// Schema
 const noteSchema = new mongoose.Schema({
   username: String,
   title: String,
@@ -43,7 +42,6 @@ const noteSchema = new mongoose.Schema({
   date: String,
 });
 
-// 🔥 IMPORTANT FIX: convert _id → id
 noteSchema.set("toJSON", {
   transform: (doc, ret) => {
     ret.id = ret._id;
@@ -54,7 +52,7 @@ noteSchema.set("toJSON", {
 
 const Note = mongoose.model("Note", noteSchema);
 
-// ===== Routes =====
+// Routes
 
 // GET notes
 app.get("/api/notes", async (req, res) => {
@@ -139,5 +137,5 @@ app.post("/api/upload", upload.single("file"), (req, res) => {
   }
 });
 
-// ===== Start Server =====
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// export Server
+export default app;
