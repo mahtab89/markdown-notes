@@ -1,0 +1,21 @@
+
+---
+
+## 🧪 How to use
+
+1. Create a file → `test.md`
+2. Paste above content
+3. Upload in your app
+4. Check:
+   - Preview works ✅
+   - Content fills textarea ✅
+   - Title auto-fills ✅
+   - Save works ✅
+
+---
+
+## 💡 Bonus (edge case test)
+
+Also try this minimal file:
+
+```md

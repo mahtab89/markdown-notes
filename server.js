@@ -2,68 +2,91 @@ import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
-import fs from "fs";
 import multer from "multer";
 import { marked } from "marked";
+import mongoose from "mongoose";
+import dotenv from "dotenv";
+import fs from "fs";
 
 const app = express();
+dotenv.config();
 
+// ===== MongoDB Connection =====
+const MDB_USERNAME = process.env.MONGODB_USERNAME;
+const MDB_PASSWORD = process.env.MONGODB_PASSWORD;
+
+const MDB_URL = `mongodb://${MDB_USERNAME}:${MDB_PASSWORD}@ac-vwteees-shard-00-00.xfvqlud.mongodb.net:27017,ac-vwteees-shard-00-01.xfvqlud.mongodb.net:27017,ac-vwteees-shard-00-02.xfvqlud.mongodb.net:27017/?ssl=true&replicaSet=atlas-c6v7zj-shard-0&authSource=admin&appName=mdnotescluster`;
+
+mongoose
+    .connect(MDB_URL)
+    .then(() => console.log("MongoDB Connected"))
+    .catch((err) => console.log(err));
+
+// ===== Path Setup =====
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+// ===== Middleware =====
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
 
+// ===== Config =====
 const PORT = process.env.PORT || 3000;
-const NOTES_FILE = path.join(__dirname, "notes.json");
 const upload = multer({ dest: "uploads/" });
 
-if (!fs.existsSync(NOTES_FILE)) {
-    fs.writeFileSync(NOTES_FILE, "[]");
-}
+// ===== Schema =====
+const noteSchema = new mongoose.Schema({
+    username: String,
+    title: String,
+    content: String,
+    date: String,
+});
 
-app.get("/api/notes", (req, res) => {
+const Note = mongoose.model("Note", noteSchema);
+
+// ===== Routes =====
+
+// GET notes
+app.get("/api/notes", async (req, res) => {
     const { username } = req.query;
+
     if (!username) {
         return res.status(400).json({ message: "username required" });
     }
-    let data;
+
     try {
-        data = JSON.parse(fs.readFileSync(NOTES_FILE));
+        const notes = await Note.find({ username }).sort({ date: -1 });
+        res.json(notes);
     } catch (err) {
-        return res.status(500).json({ message: "Server error" });
+        res.status(500).json({ message: "Server error" });
     }
-    const userNotes = data.filter((note) => note.username === username);
-    res.json(userNotes);
 });
 
-app.post("/api/notes", (req, res) => {
+// CREATE note
+app.post("/api/notes", async (req, res) => {
     const { username, title, content } = req.body;
+
     if (!username || !content) {
         return res.status(400).json({ message: "Missing fields" });
     }
-    let data;
+
     try {
-        data = JSON.parse(fs.readFileSync(NOTES_FILE));
+        const newNote = await Note.create({
+            username,
+            title,
+            content,
+            date: new Date().toISOString(),
+        });
+
+        res.status(201).json(newNote);
     } catch (err) {
-        return res.status(500).json({ message: "Server error" });
+        res.status(500).json({ message: "Server error" });
     }
-
-    const newNote = {
-        id: Date.now().toString(),
-        username,
-        title,
-        content,
-        date: new Date().toISOString(),
-    };
-
-    data.push(newNote);
-    fs.writeFileSync(NOTES_FILE, JSON.stringify(data, null, 2));
-    res.status(201).json({ message: "Note created" });
 });
 
-app.put("/api/notes/:id", (req, res) => {
+// UPDATE note
+app.put("/api/notes/:id", async (req, res) => {
     const { id } = req.params;
     const { title, content } = req.body;
 
@@ -71,40 +94,40 @@ app.put("/api/notes/:id", (req, res) => {
         return res.status(400).json({ message: "Nothing to update" });
     }
 
-    let data;
     try {
-        data = JSON.parse(fs.readFileSync(NOTES_FILE));
+        const updated = await Note.findByIdAndUpdate(
+            id,
+            { title, content, date: new Date().toISOString() },
+            { new: true },
+        );
+
+        if (!updated) {
+            return res.status(404).json({ message: "Note not found" });
+        }
+
+        res.json(updated);
     } catch (err) {
-        return res.status(500).json({ message: "Server error" });
+        res.status(500).json({ message: "Server error" });
     }
-    const index = data.findIndex((note) => note.id === id);
-
-    if (index === -1) {
-        return res.status(404).json({ message: "Note not found" });
-    }
-    data[index].title = title;
-    data[index].content = content;
-
-    fs.writeFileSync(NOTES_FILE, JSON.stringify(data, null, 2));
-    res.json({ message: "Note updated" });
 });
 
+// Upload Markdown
 app.post("/api/upload", upload.single("file"), (req, res) => {
     if (!req.file) {
         return res.status(400).json({ message: "No file uploaded" });
     }
 
-    const filePath = req.file.path;
     try {
-        const markdown = fs.readFileSync(filePath, "utf-8");
+        const markdown = fs.readFileSync(req.file.path, "utf-8");
         const html = marked(markdown);
 
-        fs.unlinkSync(filePath);
+        fs.unlinkSync(req.file.path);
 
         res.json({ html });
     } catch (err) {
-        return res.status(500).json({ message: "Server error" });
+        res.status(500).json({ message: "Server error" });
     }
 });
 
-app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
+// ===== Start Server =====
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
