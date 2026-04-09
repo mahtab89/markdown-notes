@@ -18,9 +18,9 @@ const MDB_PASSWORD = process.env.MONGODB_PASSWORD;
 const MDB_URL = `mongodb://${MDB_USERNAME}:${MDB_PASSWORD}@ac-vwteees-shard-00-00.xfvqlud.mongodb.net:27017,ac-vwteees-shard-00-01.xfvqlud.mongodb.net:27017,ac-vwteees-shard-00-02.xfvqlud.mongodb.net:27017/?ssl=true&replicaSet=atlas-c6v7zj-shard-0&authSource=admin&appName=mdnotescluster`;
 
 mongoose
-    .connect(MDB_URL)
-    .then(() => console.log("MongoDB Connected"))
-    .catch((err) => console.log(err));
+  .connect(MDB_URL)
+  .then(() => console.log("MongoDB Connected"))
+  .catch((err) => console.log(err));
 
 // ===== Path Setup =====
 const __filename = fileURLToPath(import.meta.url);
@@ -37,10 +37,19 @@ const upload = multer({ dest: "uploads/" });
 
 // ===== Schema =====
 const noteSchema = new mongoose.Schema({
-    username: String,
-    title: String,
-    content: String,
-    date: String,
+  username: String,
+  title: String,
+  content: String,
+  date: String,
+});
+
+// 🔥 IMPORTANT FIX: convert _id → id
+noteSchema.set("toJSON", {
+  transform: (doc, ret) => {
+    ret.id = ret._id;
+    delete ret._id;
+    delete ret.__v;
+  },
 });
 
 const Note = mongoose.model("Note", noteSchema);
@@ -49,84 +58,85 @@ const Note = mongoose.model("Note", noteSchema);
 
 // GET notes
 app.get("/api/notes", async (req, res) => {
-    const { username } = req.query;
+  const { username } = req.query;
 
-    if (!username) {
-        return res.status(400).json({ message: "username required" });
-    }
+  if (!username) {
+    return res.status(400).json({ message: "username required" });
+  }
 
-    try {
-        const notes = await Note.find({ username }).sort({ date: -1 });
-        res.json(notes);
-    } catch (err) {
-        res.status(500).json({ message: "Server error" });
-    }
+  try {
+    const notes = await Note.find({ username }).sort({ date: -1 });
+    res.json(notes); // now returns id instead of _id
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
 // CREATE note
 app.post("/api/notes", async (req, res) => {
-    const { username, title, content } = req.body;
+  const { username, title, content } = req.body;
 
-    if (!username || !content) {
-        return res.status(400).json({ message: "Missing fields" });
-    }
+  if (!username || !content) {
+    return res.status(400).json({ message: "Missing fields" });
+  }
 
-    try {
-        const newNote = await Note.create({
-            username,
-            title,
-            content,
-            date: new Date().toISOString(),
-        });
+  try {
+    const newNote = await Note.create({
+      username,
+      title,
+      content,
+      date: new Date().toISOString(),
+    });
 
-        res.status(201).json(newNote);
-    } catch (err) {
-        res.status(500).json({ message: "Server error" });
-    }
+    res.status(201).json(newNote); // already transformed
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
 // UPDATE note
 app.put("/api/notes/:id", async (req, res) => {
-    const { id } = req.params;
-    const { title, content } = req.body;
+  const { id } = req.params;
+  const { title, content } = req.body;
 
-    if (!title && !content) {
-        return res.status(400).json({ message: "Nothing to update" });
+  if (!title && !content) {
+    return res.status(400).json({ message: "Nothing to update" });
+  }
+
+  try {
+    const updated = await Note.findByIdAndUpdate(
+      id,
+      { title, content, date: new Date().toISOString() },
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ message: "Note not found" });
     }
 
-    try {
-        const updated = await Note.findByIdAndUpdate(
-            id,
-            { title, content, date: new Date().toISOString() },
-            { new: true },
-        );
-
-        if (!updated) {
-            return res.status(404).json({ message: "Note not found" });
-        }
-
-        res.json(updated);
-    } catch (err) {
-        res.status(500).json({ message: "Server error" });
-    }
+    res.json(updated); // also transformed
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
 // Upload Markdown
 app.post("/api/upload", upload.single("file"), (req, res) => {
-    if (!req.file) {
-        return res.status(400).json({ message: "No file uploaded" });
-    }
+  if (!req.file) {
+    return res.status(400).json({ message: "No file uploaded" });
+  }
 
-    try {
-        const markdown = fs.readFileSync(req.file.path, "utf-8");
-        const html = marked(markdown);
+  try {
+    const markdown = fs.readFileSync(req.file.path, "utf-8");
+    const html = marked(markdown);
 
-        fs.unlinkSync(req.file.path);
+    fs.unlinkSync(req.file.path);
 
-        res.json({ html });
-    } catch (err) {
-        res.status(500).json({ message: "Server error" });
-    }
+    res.json({ html });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
 // ===== Start Server =====

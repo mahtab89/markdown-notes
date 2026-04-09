@@ -5,28 +5,28 @@
     --bg-hover: #27272a; /* Zinc 800 */
     --border: #27272a; /* Zinc 800 */
     --border-hover: #3f3f46; /* Zinc 700 */
-    
+
     --text-primary: #fafafa; /* Zinc 50 */
     --text-secondary: #a1a1aa; /* Zinc 400 */
     --text-muted: #71717a; /* Zinc 500 */
-    
+
     --accent: #ffffff;
     --accent-hover: #e4e4e7; /* Zinc 200 */
     --accent-text: #000000;
-    
+
     /* Typography */
     --font-heading: 'Inter', sans-serif;
     --font-body: 'Inter', sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
-    
+
     /* Utilities */
     --radius-sm: 6px;
     --radius-md: 12px;
     --radius-lg: 20px;
     --radius-full: 9999px;
-    
+
     --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    
+
     --shadow-sm: 0 1px 2px rgba(0,0,0,0.5);
     --shadow-md: 0 4px 12px rgba(0,0,0,0.5);
     --shadow-glow: 0 0 20px rgba(255, 255, 255, 0.05);
@@ -544,12 +544,12 @@ input[type="text"]::placeholder {
         gap: 15px;
         align-items: stretch;
     }
-    
+
     .editor-header {
         flex-direction: column;
         gap: 15px;
     }
-    
+
     .header-left, .header-right {
         width: 100%;
         justify-content: space-between;
@@ -560,7 +560,7 @@ input[type="text"]::placeholder {
         padding-left: 10px;
         width: 100%;
     }
-    
+
     #note-title {
         width: 100%;
     }
@@ -568,13 +568,37 @@ input[type="text"]::placeholder {
     .dashboard-content {
         padding: 20px;
     }
-    
+
     .fab {
         bottom: 20px;
         right: 20px;
     }
-    
+
     #markdown-textarea {
         padding: 20px;
     }
+}
+.note-preview {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+}
+
+.note-preview h1,
+.note-preview h2,
+.note-preview h3 {
+    font-size: 1rem;
+    margin: 0;
+}
+
+.note-preview p {
+    margin: 0;
+}
+
+.note-preview ul {
+    padding-left: 16px;
+    margin: 0;
 }

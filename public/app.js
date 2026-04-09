@@ -114,7 +114,6 @@ document.addEventListener("DOMContentLoaded", () => {
             stateEmpty.classList.add("hidden");
             gridNotes.style.display = "grid";
 
-            // Render from newest to oldest
             const sortedNotes = [...notes].sort(
                 (a, b) => new Date(b.date) - new Date(a.date),
             );
@@ -129,16 +128,23 @@ document.addEventListener("DOMContentLoaded", () => {
                     year: "numeric",
                 }).format(new Date(note.date));
 
-                card.innerHTML = `
-                    <h3>${note.title || "Untitled Note"}</h3>
-                    <p>${note.content}</p>
-                    <div class="note-meta">
-                        <span>${formattedDate}</span>
-                        <span><i class="ph ph-text-align-left"></i> ${note.content.length} chars</span>
-                    </div>
-                `;
+                // 🔥 Convert markdown → HTML
+                const preview = note.content.slice(0, 150);
+                const htmlContent = marked.parse(preview);
 
-                // Handle edit note
+                card.innerHTML = `
+                <h3>${note.title || "Untitled Note"}</h3>
+
+                <div class="note-preview">
+                    ${htmlContent}
+                </div>
+
+                <div class="note-meta">
+                    <span>${formattedDate}</span>
+                    <span><i class="ph ph-text-align-left"></i> ${note.content.length} chars</span>
+                </div>
+            `;
+
                 card.addEventListener("click", () => {
                     openEditor(note);
                 });
@@ -265,7 +271,10 @@ document.addEventListener("DOMContentLoaded", () => {
             method: "POST",
             body: formData,
         });
-
+        if (!res.ok) {
+            showToast("Upload failed", "ph-warning-circle");
+            return;
+        }
         const data = await res.json();
         const text = await file.text();
 
@@ -293,7 +302,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 return formData;
             })(),
         });
-
+        if (!res.ok) {
+            showToast("Upload failed", "ph-warning-circle");
+            return;
+        }
         const data = await res.json();
         return data.html;
     }
