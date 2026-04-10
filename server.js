@@ -1,7 +1,4 @@
 import express from "express";
-import path from "path";
-import { fileURLToPath } from "url";
-import { dirname } from "path";
 import multer from "multer";
 import { marked } from "marked";
 import mongoose from "mongoose";
@@ -21,18 +18,12 @@ mongoose
   .then(() => console.log("MongoDB Connected"))
   .catch((err) => console.log(err));
 
-// Path Setup
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, "public")));
 
-// Config
-const PORT = process.env.PORT || 3000;
-const upload = multer({ dest: "uploads/" });
+// Config for Vercel Serverless (tmp is writable)
+const upload = multer({ dest: "/tmp" });
 
 // Schema
 const noteSchema = new mongoose.Schema({
@@ -64,7 +55,7 @@ app.get("/api/notes", async (req, res) => {
 
   try {
     const notes = await Note.find({ username }).sort({ date: -1 });
-    res.json(notes); // now returns id instead of _id
+    res.json(notes);
   } catch (err) {
     res.status(500).json({ message: "Server error" });
   }
@@ -86,7 +77,7 @@ app.post("/api/notes", async (req, res) => {
       date: new Date().toISOString(),
     });
 
-    res.status(201).json(newNote); // already transformed
+    res.status(201).json(newNote);
   } catch (err) {
     res.status(500).json({ message: "Server error" });
   }
@@ -112,7 +103,7 @@ app.put("/api/notes/:id", async (req, res) => {
       return res.status(404).json({ message: "Note not found" });
     }
 
-    res.json(updated); // also transformed
+    res.json(updated);
   } catch (err) {
     res.status(500).json({ message: "Server error" });
   }
